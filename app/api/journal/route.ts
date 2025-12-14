@@ -3,11 +3,12 @@ import OpenAI from 'openai';
 import connectToDatabase from '@/lib/db';
 import Entry from '@/models/Entry';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
 
 export async function POST(req: Request) {
+    const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    });
+
     try {
         const { content, mood } = await req.json();
 
