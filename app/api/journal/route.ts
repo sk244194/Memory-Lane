@@ -9,6 +9,7 @@ export async function POST(req: Request) {
         apiKey: process.env.OPENAI_API_KEY,
     });
 
+
     try {
         const { content, mood } = await req.json();
 
@@ -18,13 +19,29 @@ export async function POST(req: Request) {
 
         await connectToDatabase();
 
-        // Generate embedding
-        const embeddingResponse = await openai.embeddings.create({
-            model: 'text-embedding-3-small',
-            input: content,
-        });
+        let embedding;
 
-        const embedding = embeddingResponse.data[0].embedding;
+        if (process.env.USE_MOCK_AI === 'true') {
+            console.log('Using Mock AI for embedding');
+            // Generate a random vector of 1536 dimensions (standard OpenAI size)
+            embedding = Array.from({ length: 1536 }, () => Math.random());
+        } else {
+            try {
+                // Generate embedding
+                const embeddingResponse = await openai.embeddings.create({
+                    model: 'text-embedding-3-small',
+                    input: content,
+                });
+                embedding = embeddingResponse.data[0].embedding;
+            } catch (error: any) {
+                if (error?.status === 429) {
+                    console.log('OpenAI Quota Exceeded, falling back to mock embedding');
+                    embedding = Array.from({ length: 1536 }, () => Math.random());
+                } else {
+                    throw error;
+                }
+            }
+        }
 
         // Save to MongoDB
         const entry = await Entry.create({
