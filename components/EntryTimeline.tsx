@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Clock } from 'lucide-react';
 
 interface Entry {
     _id: string;
@@ -15,7 +13,12 @@ export default function EntryTimeline() {
     const [entries, setEntries] = useState<Entry[]>([]);
 
     useEffect(() => {
-        fetch('/api/journal')
+        const token = localStorage.getItem('token');
+        fetch('/api/journal', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
             .then((res) => res.json())
             .then((data) => {
                 if (data.success) {
@@ -25,35 +28,66 @@ export default function EntryTimeline() {
     }, []);
 
     return (
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg mt-8">
-            <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-4">
-                <Clock className="w-5 h-5 text-blue-500" />
-                <h2 className="text-xl font-bold text-gray-800">Recent Memories</h2>
+        <div style={{
+            backgroundColor: '#fff',
+            border: '1px solid #e5e7eb',
+            borderRadius: '16px',
+            padding: '24px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            marginTop: '24px'
+        }}>
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '16px',
+                paddingBottom: '12px',
+                borderBottom: '1px solid #f3f4f6'
+            }}>
+                <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1f2937' }}>Recent Memories</h2>
             </div>
 
-            <div className="space-y-4">
+            <div>
                 {entries.length === 0 && (
-                    <p className="text-gray-500 text-center py-4">No memories yet.</p>
+                    <p style={{ color: '#9ca3af', textAlign: 'center', padding: '16px 0', fontSize: '14px', fontStyle: 'italic' }}>
+                        No memories yet.
+                    </p>
                 )}
 
-                {entries.map((entry, i) => (
-                    <motion.div
+                {entries.map((entry) => (
+                    <div
                         key={entry._id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors"
+                        style={{
+                            padding: '14px',
+                            backgroundColor: '#f9fafb',
+                            borderRadius: '12px',
+                            border: '1px solid #f3f4f6',
+                            marginBottom: '10px',
+                            transition: 'background-color 0.15s ease',
+                            cursor: 'default',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f3f4f6'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f9fafb'; }}
                     >
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-xs text-gray-500">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '11px', color: '#9ca3af' }}>
                                 {new Date(entry.createdAt).toLocaleDateString()} • {new Date(entry.createdAt).toLocaleTimeString()}
                             </span>
-                            <span className="text-xs px-2 py-1 rounded-full bg-white border border-gray-200 text-gray-600">
+                            <span style={{
+                                fontSize: '11px',
+                                padding: '2px 10px',
+                                borderRadius: '20px',
+                                backgroundColor: '#fff',
+                                border: '1px solid #e5e7eb',
+                                color: '#6b7280'
+                            }}>
                                 {entry.mood}
                             </span>
                         </div>
-                        <p className="text-gray-700 text-sm line-clamp-2">{entry.content}</p>
-                    </motion.div>
+                        <p style={{ fontSize: '13px', color: '#4b5563', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                            {entry.content}
+                        </p>
+                    </div>
                 ))}
             </div>
         </div>

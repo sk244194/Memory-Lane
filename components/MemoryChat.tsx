@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, BookOpen } from 'lucide-react';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -31,9 +29,13 @@ export default function MemoryChat() {
         setIsLoading(true);
 
         try {
+            const token = localStorage.getItem('token');
             const res = await fetch('/api/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ query: userMsg.content }),
             });
 
@@ -53,78 +55,148 @@ export default function MemoryChat() {
     };
 
     return (
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg h-[600px] flex flex-col">
-            <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-4">
-                <Sparkles className="w-5 h-5 text-yellow-500" />
-                <h2 className="text-xl font-bold text-gray-800">Talk to your Past</h2>
+        <div style={{
+            backgroundColor: '#fff',
+            border: '1px solid #e5e7eb',
+            borderRadius: '16px',
+            padding: '24px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            height: '600px',
+            display: 'flex',
+            flexDirection: 'column',
+        }}>
+            {/* Header */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '16px',
+                paddingBottom: '12px',
+                borderBottom: '1px solid #f3f4f6'
+            }}>
+                <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1f2937' }}>Talk to your Past</h2>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 custom-scrollbar" ref={scrollRef}>
+            {/* Messages Area */}
+            <div ref={scrollRef} className="custom-scrollbar" style={{
+                flex: 1,
+                overflowY: 'auto',
+                marginBottom: '16px',
+                paddingRight: '4px',
+            }}>
                 {messages.length === 0 && (
-                    <div className="text-center text-gray-400 mt-20">
-                        <p>Ask me: "When was I most happy?" or "What did I learn last week?"</p>
+                    <div style={{ textAlign: 'center', color: '#9ca3af', marginTop: '120px', fontSize: '14px' }}>
+                        <p>Ask me: &quot;When was I most happy?&quot; or &quot;What did I learn last week?&quot;</p>
                     </div>
                 )}
 
-                <AnimatePresence>
-                    {messages.map((msg, idx) => (
-                        <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+                {messages.map((msg, idx) => (
+                    <div
+                        key={idx}
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                            marginBottom: '12px',
+                        }}
+                    >
+                        <div
+                            style={{
+                                maxWidth: '80%',
+                                padding: '10px 14px',
+                                borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                                fontSize: '13px',
+                                lineHeight: 1.5,
+                                backgroundColor: msg.role === 'user' ? '#3b82f6' : '#f3f4f6',
+                                color: msg.role === 'user' ? '#fff' : '#374151',
+                            }}
                         >
-                            <div
-                                className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.role === 'user'
-                                        ? 'bg-blue-600 text-white rounded-tr-none'
-                                        : 'bg-gray-100 text-gray-800 rounded-tl-none'
-                                    }`}
-                            >
-                                {msg.content}
-                            </div>
+                            {msg.content}
+                        </div>
 
-                            {msg.context && msg.context.length > 0 && (
-                                <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded-lg max-w-[80%] border border-gray-200">
-                                    <div className="flex items-center gap-1 mb-1 text-blue-600">
-                                        <BookOpen className="w-3 h-3" />
-                                        <span>Resurfaced Memories:</span>
-                                    </div>
-                                    {msg.context.map((c: any, i: number) => (
-                                        <div key={i} className="mb-1 last:mb-0 pl-2 border-l-2 border-blue-500/30">
-                                            <span className="text-gray-500">{new Date(c.createdAt).toLocaleDateString()}: </span>
-                                            <span className="italic opacity-70 line-clamp-1 text-gray-600">{c.content}</span>
-                                        </div>
-                                    ))}
+                        {msg.context && msg.context.length > 0 && (
+                            <div style={{
+                                marginTop: '6px',
+                                fontSize: '11px',
+                                color: '#9ca3af',
+                                backgroundColor: '#f9fafb',
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                maxWidth: '80%',
+                                border: '1px solid #e5e7eb'
+                            }}>
+                                <div style={{ color: '#3b82f6', fontWeight: 600, marginBottom: '4px' }}>
+                                    Resurfaced Memories:
                                 </div>
-                            )}
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
+                                {msg.context.map((c: any, i: number) => (
+                                    <div key={i} style={{
+                                        marginBottom: '3px',
+                                        paddingLeft: '8px',
+                                        borderLeft: '2px solid rgba(59,130,246,0.3)'
+                                    }}>
+                                        <span style={{ color: '#9ca3af' }}>{new Date(c.createdAt).toLocaleDateString()}: </span>
+                                        <span style={{ fontStyle: 'italic', color: '#6b7280' }}>{c.content}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
 
                 {isLoading && (
-                    <div className="flex items-center gap-2 text-gray-400 text-sm">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-100" />
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingLeft: '4px' }}>
+                        <div style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#3b82f6', animation: 'bounce 1s infinite' }} />
+                        <div style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#3b82f6', animation: 'bounce 1s infinite 0.15s' }} />
+                        <div style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#3b82f6', animation: 'bounce 1s infinite 0.3s' }} />
                     </div>
                 )}
             </div>
 
-            <div className="relative">
+            {/* Input */}
+            <div style={{ position: 'relative' }}>
                 <input
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     placeholder="Ask your journal..."
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-4 pr-12 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{
+                        width: '100%',
+                        backgroundColor: '#f9fafb',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '12px',
+                        padding: '12px 48px 12px 16px',
+                        fontSize: '14px',
+                        color: '#374151',
+                        fontFamily: 'inherit',
+                    }}
                 />
                 <button
                     onClick={handleSend}
                     disabled={isLoading}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-blue-600 rounded-lg text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    style={{
+                        position: 'absolute',
+                        right: '6px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '8px',
+                        backgroundColor: '#3b82f6',
+                        color: '#fff',
+                        border: 'none',
+                        cursor: isLoading ? 'not-allowed' : 'pointer',
+                        opacity: isLoading ? 0.5 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '16px',
+                        transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = '#2563eb'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; }}
                 >
-                    <Send className="w-4 h-4" />
+                    ➤
                 </button>
             </div>
         </div>

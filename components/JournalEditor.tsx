@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Save, Loader2 } from 'lucide-react';
 
 export default function JournalEditor() {
     const [content, setContent] = useState('');
@@ -18,9 +16,13 @@ export default function JournalEditor() {
         setMessage('');
 
         try {
+            const token = localStorage.getItem('token');
             const res = await fetch('/api/journal', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ content, mood }),
             });
 
@@ -39,43 +41,86 @@ export default function JournalEditor() {
     };
 
     return (
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Dear Diary...</h2>
+        <div style={{
+            backgroundColor: '#fff',
+            border: '1px solid #e5e7eb',
+            borderRadius: '16px',
+            padding: '24px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+        }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1f2937', marginBottom: '16px' }}>
+                Dear Diary...
+            </h2>
 
-            <div className="mb-4 flex gap-2 flex-wrap">
+            {/* Mood Selector */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
                 {moods.map((m) => (
                     <button
                         key={m}
                         onClick={() => setMood(m)}
-                        className={`px-3 py-1 rounded-full text-sm transition-all ${mood === m
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
+                        style={{
+                            padding: '5px 14px',
+                            borderRadius: '20px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            backgroundColor: mood === m ? '#3b82f6' : '#f3f4f6',
+                            color: mood === m ? '#fff' : '#4b5563',
+                        }}
                     >
                         {m}
                     </button>
                 ))}
             </div>
 
+            {/* Textarea */}
             <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="How are you feeling today?"
-                className="w-full h-40 bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-4"
+                style={{
+                    width: '100%',
+                    height: '140px',
+                    backgroundColor: '#f9fafb',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '12px',
+                    padding: '14px',
+                    fontSize: '14px',
+                    color: '#374151',
+                    resize: 'none',
+                    marginBottom: '16px',
+                    fontFamily: 'inherit',
+                }}
             />
 
-            <div className="flex justify-between items-center">
-                <span className="text-sm text-green-600">{message}</span>
-                <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+            {/* Save Row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '13px', color: '#16a34a' }}>{message}</span>
+                <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold disabled:opacity-50 hover:bg-blue-700"
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        backgroundColor: '#3b82f6',
+                        color: '#fff',
+                        padding: '9px 20px',
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        border: 'none',
+                        cursor: isSaving ? 'not-allowed' : 'pointer',
+                        opacity: isSaving ? 0.6 : 1,
+                        transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { if (!isSaving) e.currentTarget.style.backgroundColor = '#2563eb'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#3b82f6'; }}
                 >
-                    {isSaving ? <Loader2 className="animate-spin w-5 h-5" /> : <Save className="w-5 h-5" />}
-                    Save Memory
-                </motion.button>
+                    💾 {isSaving ? 'Saving...' : 'Save Memory'}
+                </button>
             </div>
         </div>
     );

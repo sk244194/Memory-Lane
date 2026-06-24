@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
 import OpenAI from 'openai';
 import connectToDatabase from '@/lib/db';
 import Entry from '@/models/Entry';
@@ -7,8 +8,27 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
+const JWT_SECRET = process.env.JWT_SECRET || 'memory-lane-super-secret-key-2026';
+
+async function getEmailFromRequest(req: Request) {
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    if (!token) return null;
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET) as { email: string };
+        return decoded.email;
+    } catch (e) {
+        return null;
+    }
+}
+
 export async function POST(req: Request) {
     try {
+        const email = await getEmailFromRequest(req);
+        if (!email) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { query } = await req.json();
 
         if (!query) {
@@ -25,9 +45,9 @@ export async function POST(req: Request) {
 
         const queryEmbedding = embeddingResponse.data[0].embedding;
 
-        // 2. Vector Search in MongoDB
-        // Note: You MUST create a Vector Search Index in MongoDB Atlas for this to work.
-        // Index definition:
+        // 2. Vector Search in MongoDB (filtered by user's email)
+        // Note: For filtering to work, you MUST update your Vector Search Index definition in Atlas
+        // to include the 'email' field as a filter type:
         // {
         //   "fields": [
         //     {
@@ -35,6 +55,10 @@ export async function POST(req: Request) {
         //       "path": "embedding",
         //       "similarity": "cosine",
         //       "type": "vector"
+        //     },
+        //     {
+        //       "path": "email",
+        //       "type": "filter"
         //     }
         //   ]
         // }
@@ -46,6 +70,7 @@ export async function POST(req: Request) {
                     queryVector: queryEmbedding,
                     numCandidates: 100,
                     limit: 5,
+                    filter: { email: { $eq: email } },
                 },
             },
             {

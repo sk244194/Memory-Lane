@@ -1,6 +1,7 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
 export interface IEntry {
+    email: string;
     content: string;
     mood: string;
     createdAt: Date;
@@ -8,10 +9,11 @@ export interface IEntry {
 }
 
 const EntrySchema = new Schema<IEntry>({
+    email: { type: String, required: true, index: true },
     content: { type: String, required: true },
     mood: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
-    embedding: { type: [Number], required: true }, // Vector index must be created in MongoDB Atlas
+    embedding: { type: [Number], default: [] }, // Vector index must be created in MongoDB Atlas
 });
 
 // Prevent recompilation of model in development
