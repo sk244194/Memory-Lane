@@ -66,8 +66,13 @@ export async function connectToUserDatabase(): Promise<mongoose.Connection> {
     }
 
     if (!userCached.promise) {
-        userCached.promise = Promise.resolve(mongoose.createConnection(MONGODB_USERS_URI!));
+        userCached.promise = mongoose
+            .createConnection(MONGODB_USERS_URI!, {
+                bufferCommands: false,
+            })
+            .asPromise();
     }
+
     try {
         userCached.conn = await userCached.promise;
     } catch (e) {

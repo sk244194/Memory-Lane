@@ -89,6 +89,9 @@ export async function POST(req: Request) {
             `Date: ${new Date(r.createdAt).toLocaleDateString()}\nMood: ${r.mood}\nEntry: ${r.content}`
         ).join('\n\n');
 
+        console.log("Results:", results);
+        console.log("Context:", context);
+
         // 4. RAG with OpenAI
         const completion = await openai.chat.completions.create({
             model: 'gpt-4o',
